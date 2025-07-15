@@ -4,6 +4,8 @@ const MIN_AMOUNT = 1000;
 const MAX_AMOUNT = 100000;
 const TERMS = [3, 6, 9, 12];
 const STORAGE_KEY = 'installment-completed';
+const VARIANT = 'ghk_5639_var3'; // для аналитики
+const YM_ID = 96171108;
 
 // --- Состояние ---
 let state = {
@@ -15,6 +17,14 @@ let state = {
 
 // Для возврата с инфо-баннера на нужный экран
 let infoBackHash = '';
+
+// --- Флаги для аналитики ---
+let analytics = {
+  chooseScreenViewed: false,
+  confirmScreenViewed: false,
+  infoScreenViewed: false,
+  endScreenViewed: false
+};
 
 // --- Утилиты ---
 function formatMoney(num) {
@@ -34,6 +44,17 @@ function calcServiceFee(amount, term) {
   // Сумма всех процентов за год (если срок < 12 мес — пропорционально)
   const totalInterest = amount * RATE * (term / 12);
   return totalInterest;
+}
+
+function sendGA(event, params = {}) {
+  if (typeof gtag === 'function') {
+    gtag('event', event, params);
+  }
+}
+function sendYM(event, params = {}) {
+  if (typeof ym === 'function') {
+    ym(YM_ID, 'reachGoal', event, params);
+  }
 }
 
 // --- Рендеринг ---
@@ -87,6 +108,12 @@ function getInfoBlockHtml(amountNum) {
 function renderCalculator() {
   document.title = 'Рассрочка';
   const app = document.getElementById('app');
+  // --- Аналитика: просмотр экрана выбора условий рассрочки ---
+  if (!analytics.chooseScreenViewed) {
+    sendGA('5639_page_view_choose_loan_var3');
+    sendYM('5639_page_view_choose_loan_var3');
+    analytics.chooseScreenViewed = true;
+  }
   // Если поле уже есть, не пересоздаём его, а только обновляем связанные части
   if (document.getElementById('amount')) {
     // Только обновляем связанные значения
@@ -144,6 +171,9 @@ function renderCalculator() {
     });
   });
   document.getElementById('nextBtn').addEventListener('click', () => {
+    // --- Аналитика: клик по кнопке "Продолжить" ---
+    sendGA('5639_click_continue_var3');
+    sendYM('5639_click_continue_var3');
     if (typeof gtag === 'function') {
       gtag('event', 'continue_click');
     }
@@ -151,6 +181,9 @@ function renderCalculator() {
   });
   if (amountNum >= 50000) {
     document.getElementById('infoBlock').addEventListener('click', () => {
+      // --- Аналитика: клик на инфо на экране выбора условий ---
+      sendGA('5639_click_choose_loan_more_info_var3');
+      sendYM('5639_click_choose_loan_more_info_var3');
       infoBackHash = location.hash;
       location.hash = 'info';
     });
@@ -163,6 +196,12 @@ function renderConfirm() {
   document.title = 'Подтверждение';
   const amountNum = parseInt(state.amount, 10);
   const infoBlockHtml = getInfoBlockHtml(amountNum);
+  // --- Аналитика: просмотр экрана подтверждения ---
+  if (!analytics.confirmScreenViewed) {
+    sendGA('5639_page_view_agreement_var3');
+    sendYM('5639_page_view_agreement_var3');
+    analytics.confirmScreenViewed = true;
+  }
   document.getElementById('app').innerHTML = `
     <div class="header-row">
       <button id="backBtn" aria-label="Назад">
@@ -187,10 +226,23 @@ function renderConfirm() {
     location.hash = '';
   });
   document.getElementById('submitBtn').addEventListener('click', () => {
+    // --- Аналитика: клик по кнопке "Оформить рассрочку" ---
+    const params = {
+      date: Date.now(),
+      variant: VARIANT,
+      sum: parseInt(state.amount, 10),
+      period: `${state.term} мес`,
+      payment: state.payment
+    };
+    sendGA('5639_click_agreement_make_deal_var3', params);
+    sendYM('5639_click_agreement_make_deal_var3', params);
     location.hash = 'success';
   });
   if (infoBlockHtml) {
     document.getElementById('infoBlock').addEventListener('click', () => {
+      // --- Аналитика: клик на инфо на экране подтверждения ---
+      sendGA('5639_click_agreement_more_info_var3');
+      sendYM('5639_click_agreement_more_info_var3');
       infoBackHash = location.hash;
       location.hash = 'info';
     });
@@ -199,6 +251,12 @@ function renderConfirm() {
 
 function renderInfo() {
   document.title = 'Порядок зачисления суммы рассрочки';
+  // --- Аналитика: просмотр экрана информации ---
+  if (!analytics.infoScreenViewed) {
+    sendGA('5639_page_view_more_info_var3');
+    sendYM('5639_page_view_more_info_var3');
+    analytics.infoScreenViewed = true;
+  }
   document.getElementById('app').innerHTML = `
     <button id="infoCloseBtn" class="info-close-btn" aria-label="Закрыть" style="position:absolute;top:16px;right:16px;background:none;border:none;padding:0;z-index:10;">
       <svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -228,6 +286,12 @@ function renderInfo() {
 
 function renderSuccess() {
   document.title = 'Спасибо!';
+  // --- Аналитика: просмотр финальной страницы ---
+  if (!analytics.endScreenViewed) {
+    sendGA('5639_end_page_view_var3');
+    sendYM('5639_end_page_view_var3');
+    analytics.endScreenViewed = true;
+  }
   document.getElementById('app').innerHTML = `
     <img src="img/success.png" alt="Успех" class="success-img" style="display:block;margin:48px auto 32px auto;width:160px;height:160px;object-fit:contain;" />
     <h2 style="text-align:center;">Только тссс</h2>
