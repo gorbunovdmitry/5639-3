@@ -167,7 +167,8 @@ function renderCalculator() {
   document.querySelectorAll('.term-btn').forEach(btn => {
     btn.addEventListener('click', e => {
       state.term = parseInt(btn.dataset.term);
-      renderCalculator();
+      // renderCalculator(); // Убираем частичный ререндер
+      render(); // Делаем полный ререндер, чтобы обновился selected
     });
   });
   document.getElementById('nextBtn').addEventListener('click', () => {
