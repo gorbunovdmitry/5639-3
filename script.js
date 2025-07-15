@@ -189,8 +189,11 @@ function renderTermButtons() {
   termBtnsDiv.querySelectorAll('.term-btn').forEach(btn => {
     btn.addEventListener('click', e => {
       state.term = parseInt(btn.dataset.term);
-      renderTermButtons();
-      // Также обновим связанные значения (платёж, плата за услугу)
+      // Обновляем только классы кнопок
+      termBtnsDiv.querySelectorAll('.term-btn').forEach(b => {
+        b.classList.toggle('selected', parseInt(b.dataset.term) === state.term);
+      });
+      // Обновляем связанные значения
       state.payment = calcPayment(state.amount, state.term);
       state.serviceFee = calcServiceFee(state.amount, state.term);
       document.querySelector('.card-title').textContent = formatMoney(state.payment) + ' в месяц';
