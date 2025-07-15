@@ -167,8 +167,40 @@ function renderCalculator() {
   document.querySelectorAll('.term-btn').forEach(btn => {
     btn.addEventListener('click', e => {
       state.term = parseInt(btn.dataset.term);
-      // renderCalculator(); // Убираем частичный ререндер
-      render(); // Делаем полный ререндер, чтобы обновился selected
+      // Частичный ререндер только блока выбора срока
+      const termBtnsDiv = document.querySelector('.term-btns');
+      termBtnsDiv.innerHTML = TERMS.map(term => `<button class="term-btn${state.term === term ? ' selected' : ''}" data-term="${term}">${term} мес</button>`).join('');
+      // Повторно навешиваем обработчики
+      termBtnsDiv.querySelectorAll('.term-btn').forEach(newBtn => {
+        newBtn.addEventListener('click', e => {
+          state.term = parseInt(newBtn.dataset.term);
+          // Рекурсивно обновляем только блок
+          const termBtnsDivInner = document.querySelector('.term-btns');
+          termBtnsDivInner.innerHTML = TERMS.map(term => `<button class="term-btn${state.term === term ? ' selected' : ''}" data-term="${term}">${term} мес</button>`).join('');
+          termBtnsDivInner.querySelectorAll('.term-btn').forEach(btn2 => {
+            btn2.addEventListener('click', e => {
+              state.term = parseInt(btn2.dataset.term);
+              // и так далее, рекурсивно
+              const termBtnsDivInner2 = document.querySelector('.term-btns');
+              termBtnsDivInner2.innerHTML = TERMS.map(term => `<button class="term-btn${state.term === term ? ' selected' : ''}" data-term="${term}">${term} мес</button>`).join('');
+              termBtnsDivInner2.querySelectorAll('.term-btn').forEach(btn3 => {
+                btn3.addEventListener('click', e => {
+                  state.term = parseInt(btn3.dataset.term);
+                  // и так далее, но глубже не нужно
+                  const termBtnsDivInner3 = document.querySelector('.term-btns');
+                  termBtnsDivInner3.innerHTML = TERMS.map(term => `<button class="term-btn${state.term === term ? ' selected' : ''}" data-term="${term}">${term} мес</button>`).join('');
+                  // не навешиваем дальше, чтобы не было бесконечной рекурсии
+                });
+              });
+            });
+          });
+        });
+      });
+      // Также обновим связанные значения (платёж, плата за услугу)
+      state.payment = calcPayment(state.amount, state.term);
+      state.serviceFee = calcServiceFee(state.amount, state.term);
+      document.querySelector('.card-title').textContent = formatMoney(state.payment) + ' в месяц';
+      document.querySelector('.card small').textContent = 'включая плату за услугу';
     });
   });
   document.getElementById('nextBtn').addEventListener('click', () => {
