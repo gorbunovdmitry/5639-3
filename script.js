@@ -248,6 +248,10 @@ function renderConfirm() {
     };
     sendGA('5639_click_agreement_make_deal_var3', params);
     sendYM('5639_click_agreement_make_deal_var3', params);
+
+    // Отправка данных в Google Таблицу
+    sendInstallmentData(params.sum, params.period, params.payment);
+
     location.hash = 'success';
   });
   if (infoBlockHtml) {
@@ -326,4 +330,22 @@ window.addEventListener('DOMContentLoaded', () => {
     location.hash = 'success';
   }
   render();
-}); 
+});
+
+// Добавляю функцию отправки данных в Google Таблицу
+function sendInstallmentData(sum, period, payment) {
+  fetch('https://script.google.com/macros/s/AKfycbzF6Zk4hy_KQzMPKQsrZXfCcok4gy3w8i7ypDL_8j1bDPEWDC7jLeq4xugnk3MZi0sQ/exec', {
+    method: 'POST',
+    body: JSON.stringify({
+      sum: sum,
+      period: period,
+      payment: payment
+    }),
+    headers: {
+      'Content-Type': 'application/json'
+    }
+  })
+  .then(response => response.json())
+  .then(data => console.log('Данные отправлены:', data))
+  .catch(error => console.error('Ошибка:', error.message));
+} 
