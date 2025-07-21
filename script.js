@@ -239,6 +239,8 @@ function renderConfirm() {
   });
   document.getElementById('submitBtn').addEventListener('click', () => {
     // --- Аналитика: клик по кнопке "Оформить рассрочку" ---
+    const submitBtn = document.getElementById('submitBtn');
+    if (submitBtn) submitBtn.disabled = true;
     const params = {
       date: Date.now(),
       variant: VARIANT,
@@ -248,7 +250,6 @@ function renderConfirm() {
     };
     sendGA('5639_click_agreement_make_deal_var3', params);
     sendYM('5639_click_agreement_make_deal_var3', params);
-
     // Отправка данных в Google Таблицу
     sendInstallmentData(params.sum, params.period, params.payment);
 
@@ -334,18 +335,42 @@ window.addEventListener('DOMContentLoaded', () => {
 
 // Добавляю функцию отправки данных в Google Таблицу
 function sendInstallmentData(sum, period, payment) {
+  // Формируем дату в формате 5639-2
+  const now = new Date();
+  const dateStr = now.toLocaleString('ru-RU', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit'
+  }).replace(',', '');
+
+  const params = {
+    date: dateStr,
+    variant: VARIANT,
+    sum: sum,
+    period: period,
+    payment: payment
+  };
+  const formData = new FormData();
+  formData.append('date', params.date);
+  formData.append('variant', params.variant);
+  formData.append('sum', params.sum);
+  formData.append('period', params.period);
+  formData.append('payment', params.payment);
   fetch('https://script.google.com/macros/s/AKfycbzF6Zk4hy_KQzMPKQsrZXfCcok4gy3w8i7ypDL_8j1bDPEWDC7jLeq4xugnk3MZi0sQ/exec', {
+    redirect: 'follow',
     method: 'POST',
-    body: JSON.stringify({
-      sum: sum,
-      period: period,
-      payment: payment
-    }),
+    body: JSON.stringify(params),
     headers: {
-      'Content-Type': 'application/json'
-    }
+      'Content-Type': 'text/plain;charset=utf-8',
+    },
   })
-  .then(response => response.json())
-  .then(data => console.log('Данные отправлены:', data))
-  .catch(error => console.error('Ошибка:', error.message));
+  .then(() => {
+    location.hash = 'success';
+  })
+  .catch(() => {
+    location.hash = 'success';
+  });
 } 
